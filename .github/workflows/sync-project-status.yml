@@ -5,7 +5,7 @@ on:
     types: [labeled, unlabeled]
 
 env:
-  PROJECT_NUMBER: 13  # sfis-demo Compliance Pipeline
+  PROJECT_NUMBER: 15  # sfis-demo Compliance Pipeline (repo-level)
   FIELD_NAME: Stage  # Change this to your custom field name
 
 jobs:
