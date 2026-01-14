@@ -1,7 +1,7 @@
 name: Compliance Analysis Request
 description: Request automated compliance analysis for attached documents
 title: "[Compliance] "
-labels: ["compliance-scan"]
+labels: ["needs-analysis"]
 body:
   - type: markdown
     attributes:
