@@ -20,29 +20,47 @@ jobs:
             const label = context.payload.label?.name;
             const issueNodeId = context.payload.issue.node_id;
             
-            // Map labels to field option values
-            const labelToStatus = {
+            // Map labels to Stage field values
+            const labelToStage = {
               'ready': 'Ready',
               'parsing': 'Parsing', 
               'querying': 'Querying',
-              'complete': 'Complete'
+              'complete': 'Complete',
+              'failed': 'Failed'
             };
             
-            const newStatus = labelToStatus[label];
-            if (!newStatus) {
+            // Map labels to Status field values
+            const labelToProjectStatus = {
+              'ready': 'Todo',
+              'parsing': 'In Progress', 
+              'querying': 'In Progress',
+              'complete': 'Done',
+              'failed': 'Todo'
+            };
+            
+            const newStage = labelToStage[label];
+            const newProjectStatus = labelToProjectStatus[label];
+            
+            if (!newStage) {
               console.log(`Label "${label}" not in mapping, skipping`);
               return;
             }
             
-            console.log(`Syncing label "${label}" -> Status: "${newStatus}"`);
+            console.log(`Syncing label "${label}" -> Stage: "${newStage}", Status: "${newProjectStatus}"`);
             
-            // Get the project (org-level project)
+            // Get the project (org-level project) with both Stage and Status fields
             const projectQuery = `
               query($org: String!, $number: Int!) {
                 organization(login: $org) {
                   projectV2(number: $number) {
                     id
-                    field(name: "Stage") {
+                    stageField: field(name: "Stage") {
+                      ... on ProjectV2SingleSelectField {
+                        id
+                        options { id name }
+                      }
+                    }
+                    statusField: field(name: "Status") {
                       ... on ProjectV2SingleSelectField {
                         id
                         options { id name }
@@ -59,12 +77,19 @@ jobs:
             });
             
             const project = projectResult.organization.projectV2;
-            const field = project.field;
-            const option = field.options.find(o => o.name === newStatus);
+            const stageField = project.stageField;
+            const statusField = project.statusField;
             
-            if (!option) {
-              console.log(`Option "${newStatus}" not found in field`);
+            const stageOption = stageField.options.find(o => o.name === newStage);
+            const statusOption = statusField?.options?.find(o => o.name === newProjectStatus);
+            
+            if (!stageOption) {
+              console.log(`Stage option "${newStage}" not found in field`);
               return;
+            }
+            
+            if (!statusOption) {
+              console.log(`Status option "${newProjectStatus}" not found (Status field may not exist or option missing)`);
             }
             
             // Find the project item for this issue
@@ -113,7 +138,7 @@ jobs:
               var itemId = item.id;
             }
             
-            // Update the field value
+            // Update the Stage field value
             const updateMutation = `
               mutation($projectId: ID!, $itemId: ID!, $fieldId: ID!, $optionId: String!) {
                 updateProjectV2ItemFieldValue(input: {
@@ -130,8 +155,20 @@ jobs:
             await github.graphql(updateMutation, {
               projectId: project.id,
               itemId: itemId,
-              fieldId: field.id,
-              optionId: option.id
+              fieldId: stageField.id,
+              optionId: stageOption.id
             });
             
-            console.log(`✅ Updated issue to Stage: ${newStatus}`);
+            console.log(`✅ Updated issue Stage to: ${newStage}`);
+            
+            // Update the Status field if available
+            if (statusField && statusOption) {
+              await github.graphql(updateMutation, {
+                projectId: project.id,
+                itemId: itemId,
+                fieldId: statusField.id,
+                optionId: statusOption.id
+              });
+              
+              console.log(`✅ Updated issue Status to: ${newProjectStatus}`);
+            }
