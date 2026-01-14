@@ -1,0 +1,71 @@
+name: Compliance Analysis Request
+description: Request automated compliance analysis for attached documents
+title: "[Compliance] "
+labels: ["compliance-scan"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 📋 Compliance Analysis Request
+
+        Upload your documents and select the framework and LLM model for analysis.
+        The analysis will start automatically when you submit this issue.
+
+  - type: dropdown
+    id: framework
+    attributes:
+      label: Framework
+      description: Select the compliance framework to evaluate against
+      options:
+        - PWS (Performance Work Statement)
+        - SFIS (Standard Financial Information System)
+        - NIST 800-53
+        - HIPAA
+        - SOC 2
+        - Custom
+    validations:
+      required: true
+
+  - type: dropdown
+    id: llm-model
+    attributes:
+      label: LLM Model
+      description: Select the AI model to use for analysis
+      options:
+        - GPT-4o Mini
+        - GPT-4o
+        - GPT-4 Turbo
+        - Claude 3.5 Sonnet
+        - Claude 3 Opus
+    validations:
+      required: true
+
+  - type: textarea
+    id: documents
+    attributes:
+      label: Documents
+      description: |
+        Drag and drop your documents here (PDF, MD, TXT, DOCX, etc.)
+        You can upload multiple files.
+      placeholder: |
+        Drag and drop files here or paste file links...
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional Context
+      description: Any additional context or specific areas of focus for the analysis
+      placeholder: |
+        Optional: Describe what you're looking for or any specific concerns...
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: confirmation
+    attributes:
+      label: Confirmation
+      options:
+        - label: I confirm that the uploaded documents do not contain sensitive PII or classified information
+          required: true
